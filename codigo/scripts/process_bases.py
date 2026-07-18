@@ -39,6 +39,7 @@ colunas_remover_escolas = [
     "Localização",
     "Localidade Diferenciada",
     "Categoria Escola Privada",
+    "Conveniada Poder Público",
     "Regulamentação pelo Conselho de Educação",
     "Outras Ofertas Educacionais",
 ]
