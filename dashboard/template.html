@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COOP Clima São Vicente — Painel de Bairros</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Londrina+Solid:wght@300;400;900&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --verde:#007a4a;
+  --marrom:#874a33;
+  --azul:#00a3e0;
+  --laranja:#e87722;
+  --offwhite:#f9f3f0;
+  --verde-escuro:#1a3c2c;
+  --ink:#2b2b28;
+  --ink-2:#5c5a54;
+  --card:#ffffff;
+  --borda:#e8ddd6;
+  --raio:14px;
+  --sombra:0 2px 10px rgba(26,60,44,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Roboto',sans-serif;
+  background:var(--offwhite);
+  color:var(--ink);
+  line-height:1.5;
+}
+h1,h2,h3,.font-titulo{font-family:'Londrina Solid',cursive;font-weight:400;letter-spacing:.02em}
+
+/* ---------- header ---------- */
+header{
+  background:var(--verde-escuro);
+  color:var(--offwhite);
+  padding:22px clamp(16px,4vw,48px) 26px;
+  border-bottom:6px solid var(--verde);
+}
+.header-linha{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-end;justify-content:space-between}
+header h1{font-size:clamp(1.9rem,4.5vw,3rem);color:#fff;line-height:1.05}
+header h1 .folha{color:var(--laranja)}
+header .sub{color:#cfe4d6;font-size:.95rem;max-width:640px;margin-top:6px}
+.filtro-bairro{display:flex;flex-direction:column;gap:6px;min-width:260px}
+.filtro-bairro label{font-family:'Londrina Solid',cursive;font-size:1.15rem;color:#cfe4d6}
+.filtro-bairro select{
+  font-family:'Roboto',sans-serif;font-size:1rem;
+  padding:10px 14px;border-radius:10px;border:2px solid var(--verde);
+  background:#fff;color:var(--ink);cursor:pointer;
+}
+.filtro-bairro select:focus{outline:3px solid var(--azul)}
+
+/* ---------- layout ---------- */
+main{max-width:1240px;margin:0 auto;padding:26px clamp(12px,3vw,32px) 40px}
+section{margin-bottom:34px}
+.sec-titulo{
+  font-size:1.7rem;color:var(--verde-escuro);
+  border-left:6px solid var(--laranja);padding-left:12px;margin-bottom:6px;
+}
+.sec-sub{color:var(--ink-2);font-size:.9rem;margin-bottom:16px}
+#contexto-bairro{
+  display:none;background:var(--verde);color:#fff;border-radius:var(--raio);
+  padding:10px 16px;margin-bottom:20px;font-size:.95rem;
+}
+#contexto-bairro strong{font-family:'Londrina Solid',cursive;font-size:1.2rem;margin-right:8px}
+#contexto-bairro button{
+  float:right;background:#fff;color:var(--verde);border:none;border-radius:8px;
+  padding:4px 12px;font-weight:700;cursor:pointer;font-family:'Roboto',sans-serif;
+}
+
+/* ---------- KPIs ---------- */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));gap:14px}
+.kpi{
+  background:var(--card);border-radius:var(--raio);padding:16px 16px 12px;
+  box-shadow:var(--sombra);border-top:5px solid var(--verde);
+}
+.kpi:nth-child(2){border-top-color:var(--laranja)}
+.kpi:nth-child(3){border-top-color:var(--azul)}
+.kpi:nth-child(4){border-top-color:var(--marrom)}
+.kpi:nth-child(5){border-top-color:var(--laranja)}
+.kpi:nth-child(6){border-top-color:var(--azul)}
+.kpi:nth-child(7){border-top-color:var(--verde)}
+.kpi .rotulo{font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-2);font-weight:500}
+.kpi .valor{font-family:'Roboto',sans-serif;font-weight:700;font-size:1.65rem;color:var(--verde-escuro);margin-top:4px}
+.kpi .nota{font-size:.72rem;color:var(--ink-2)}
+
+/* ---------- gráficos ---------- */
+.chart-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.chart-card{
+  background:var(--card);border-radius:var(--raio);box-shadow:var(--sombra);
+  padding:16px;display:flex;flex-direction:column;min-height:300px;
+}
+.chart-card h3{font-size:1.25rem;color:var(--verde-escuro);margin-bottom:2px}
+.chart-card .desc{font-size:.78rem;color:var(--ink-2);margin-bottom:10px}
+.chart-wrap{position:relative;flex:1;min-height:220px}
+
+/* ---------- mapa ---------- */
+#mapa{height:500px;border-radius:var(--raio);box-shadow:var(--sombra);border:3px solid var(--verde-escuro)}
+.legenda-mapa{display:flex;flex-wrap:wrap;gap:14px;margin-top:10px;font-size:.85rem;color:var(--ink-2)}
+.legenda-mapa .dot{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:5px;vertical-align:-1px;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.25)}
+.leaflet-popup-content{font-family:'Roboto',sans-serif;font-size:.85rem}
+.leaflet-popup-content b{color:var(--verde-escuro)}
+
+/* ---------- tabelas ---------- */
+.tabela-dupla{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.tabela-card{background:var(--card);border-radius:var(--raio);box-shadow:var(--sombra);padding:16px;overflow-x:auto}
+.tabela-card h3{font-size:1.25rem;color:var(--verde-escuro);margin-bottom:10px}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th{
+  font-family:'Londrina Solid',cursive;font-weight:400;font-size:.95rem;
+  text-align:left;color:#fff;background:var(--verde-escuro);
+  padding:8px 10px;position:sticky;top:0;
+}
+th:first-child{border-radius:8px 0 0 0}
+th:last-child{border-radius:0 8px 0 0}
+td{padding:7px 10px;border-bottom:1px solid var(--borda);vertical-align:top}
+tbody tr:nth-child(even){background:#faf7f4}
+tbody tr.destacado{background:#e3f1e9;font-weight:700}
+td.num{text-align:right;font-variant-numeric:tabular-nums}
+.badge{display:inline-block;padding:1px 8px;border-radius:999px;font-size:.72rem;font-weight:500;color:#fff}
+.badge.verde{background:var(--verde)} .badge.laranja{background:var(--laranja)}
+.badge.azul{background:var(--azul)} .badge.marrom{background:var(--marrom)}
+.badge.cinza{background:#8a8880}
+
+/* ---------- abas de detalhamento ---------- */
+.abas{display:flex;gap:8px;margin-bottom:0}
+.aba{
+  font-family:'Londrina Solid',cursive;font-size:1.1rem;
+  background:var(--borda);color:var(--ink-2);border:none;cursor:pointer;
+  padding:10px 22px;border-radius:12px 12px 0 0;
+}
+.aba.ativa{background:var(--verde-escuro);color:#fff}
+.painel-aba{display:none;background:var(--card);border-radius:0 var(--raio) var(--raio) var(--raio);box-shadow:var(--sombra);padding:16px}
+.painel-aba.ativa{display:block}
+.busca{
+  width:100%;max-width:420px;padding:10px 14px;margin-bottom:12px;
+  border:2px solid var(--borda);border-radius:10px;font-family:'Roboto',sans-serif;font-size:.95rem;
+}
+.busca:focus{outline:none;border-color:var(--azul)}
+.scroll-tabela{max-height:480px;overflow:auto;border-radius:8px}
+.contagem{font-size:.8rem;color:var(--ink-2);margin-bottom:8px}
+
+/* ---------- rodapé ---------- */
+footer{
+  background:var(--verde-escuro);color:#cfe4d6;
+  padding:26px clamp(16px,4vw,48px);font-size:.85rem;margin-top:20px;
+}
+footer .titulo{font-family:'Londrina Solid',cursive;font-size:1.4rem;color:#fff;margin-bottom:6px}
+footer a{color:var(--azul)}
+
+@media (max-width:640px){
+  .filtro-bairro{width:100%}
+  #mapa{height:380px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-linha">
+    <div>
+      <h1>COOP Clima <span class="folha">São Vicente</span> 🌿</h1>
+      <p class="sub">Painel de utilidade pública: demografia, escolas e unidades de saúde
+      de São Vicente (SP), bairro a bairro. Escolha um bairro para ver o retrato local.</p>
+    </div>
+    <div class="filtro-bairro">
+      <label for="sel-bairro">Filtrar por bairro</label>
+      <select id="sel-bairro">
+        <option value="">🏙️ Visão Geral — toda a cidade</option>
+      </select>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div id="contexto-bairro">
+    <button id="btn-limpar" type="button">Ver cidade toda</button>
+    <strong id="ctx-nome"></strong><span id="ctx-detalhe"></span>
+  </div>
+
+  <!-- KPIs -->
+  <section aria-label="Indicadores-resumo">
+    <h2 class="sec-titulo">Resumo</h2>
+    <p class="sec-sub" id="kpi-escopo">Indicadores de toda a cidade.</p>
+    <div class="kpi-grid">
+      <div class="kpi"><div class="rotulo">População</div><div class="valor" id="kpi-pop">–</div><div class="nota">soma das populações por cor/raça</div></div>
+      <div class="kpi"><div class="rotulo">Renda média</div><div class="valor" id="kpi-renda">–</div><div class="nota">salários mínimos (média por bairro)</div></div>
+      <div class="kpi"><div class="rotulo">Densidade</div><div class="valor" id="kpi-dens">–</div><div class="nota">habitantes por hectare</div></div>
+      <div class="kpi"><div class="rotulo">Escolas ativas</div><div class="valor" id="kpi-esc">–</div><div class="nota">exclui unidades paralisadas</div></div>
+      <div class="kpi"><div class="rotulo">Capacidade de matrículas</div><div class="valor" id="kpi-cap">–</div><div class="nota">teto das faixas de porte (estimativa)</div></div>
+      <div class="kpi"><div class="rotulo">Unidades de saúde</div><div class="valor" id="kpi-sau">–</div><div class="nota">estabelecimentos cadastrados</div></div>
+      <div class="kpi"><div class="rotulo">Saúde por 10 mil hab.</div><div class="valor" id="kpi-sau-pop">–</div><div class="nota">unidades ÷ população × 10.000</div></div>
+    </div>
+  </section>
+
+  <!-- Gráficos -->
+  <section aria-label="Gráficos">
+    <h2 class="sec-titulo">Panorama em gráficos</h2>
+    <p class="sec-sub">Todos os gráficos respondem ao filtro de bairro. Passe o mouse para ver os valores.</p>
+    <div class="chart-grid">
+      <div class="chart-card">
+        <h3>Composição populacional</h3>
+        <p class="desc">Autodeclaração de cor/raça (Censo)</p>
+        <div class="chart-wrap"><canvas id="ch-demografia"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Escolas por categoria administrativa</h3>
+        <p class="desc">Somente escolas em atividade</p>
+        <div class="chart-wrap"><canvas id="ch-categoria"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Oferta de ensino</h3>
+        <p class="desc">Nº de escolas que oferecem cada etapa/modalidade</p>
+        <div class="chart-wrap"><canvas id="ch-etapas"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Capacidade de ensino (porte)</h3>
+        <p class="desc">Escolas por faixa de matrículas</p>
+        <div class="chart-wrap"><canvas id="ch-porte"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Serviços de saúde disponíveis</h3>
+        <p class="desc">Nº de unidades com cada serviço</p>
+        <div class="chart-wrap"><canvas id="ch-servicos"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Atendimento ambulatorial SUS</h3>
+        <p class="desc">Unidades de saúde com e sem convênio SUS</p>
+        <div class="chart-wrap"><canvas id="ch-sus"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Mapa -->
+  <section aria-label="Mapa">
+    <h2 class="sec-titulo">Mapa de equipamentos públicos</h2>
+    <p class="sec-sub">Use o controle no canto superior direito do mapa para ligar/desligar camadas.
+    Clique nos pontos para ver detalhes.</p>
+    <div id="mapa"></div>
+    <div class="legenda-mapa">
+      <span><span class="dot" style="background:#e87722"></span>Escolas públicas</span>
+      <span><span class="dot" style="background:#00a3e0"></span>Escolas privadas</span>
+      <span><span class="dot" style="background:#007a4a"></span>Saúde — atende SUS</span>
+      <span><span class="dot" style="background:#874a33"></span>Saúde — demais unidades</span>
+      <span id="nota-coord"></span>
+    </div>
+  </section>
+
+  <!-- Rankings -->
+  <section aria-label="Rankings de bairros">
+    <h2 class="sec-titulo">Rankings entre bairros</h2>
+    <p class="sec-sub">Comparação entre todos os bairros da cidade (o bairro selecionado fica destacado).</p>
+    <div class="tabela-dupla">
+      <div class="tabela-card">
+        <h3>TOP 10 — bairros com mais escolas</h3>
+        <table><thead><tr><th>#</th><th>Bairro</th><th style="text-align:right">Escolas ativas</th></tr></thead>
+        <tbody id="tb-top-escolas"></tbody></table>
+      </div>
+      <div class="tabela-card">
+        <h3>TOP 10 — bairros com mais unidades de saúde</h3>
+        <table><thead><tr><th>#</th><th>Bairro</th><th style="text-align:right">Unidades</th></tr></thead>
+        <tbody id="tb-top-saude"></tbody></table>
+      </div>
+    </div>
+    <div class="chart-card" style="margin-top:16px">
+      <h3>Densidade demográfica — TOP 10 bairros (hab/ha)</h3>
+      <p class="desc">Bairros mais adensados da cidade — indicador-chave para adaptação climática</p>
+      <div class="chart-wrap" style="min-height:300px"><canvas id="ch-densidade"></canvas></div>
+    </div>
+  </section>
+
+  <!-- Detalhamento -->
+  <section aria-label="Tabelas de detalhamento">
+    <h2 class="sec-titulo">Detalhamento por unidade</h2>
+    <p class="sec-sub">Listas completas, com busca por nome, endereço ou bairro. Respondem ao filtro de bairro.</p>
+    <div class="abas">
+      <button class="aba ativa" data-aba="escolas" type="button">🏫 Escolas</button>
+      <button class="aba" data-aba="saude" type="button">🏥 Unidades de saúde</button>
+    </div>
+    <div class="painel-aba ativa" id="painel-escolas">
+      <input class="busca" id="busca-escolas" type="search" placeholder="Buscar escola, endereço ou bairro…">
+      <p class="contagem" id="cont-escolas"></p>
+      <div class="scroll-tabela">
+        <table><thead><tr>
+          <th>Escola</th><th>Categoria</th><th>Bairro</th><th>Endereço</th><th>Telefone</th><th>Porte</th><th>Etapas</th><th>Status</th>
+        </tr></thead><tbody id="tb-escolas"></tbody></table>
+      </div>
+    </div>
+    <div class="painel-aba" id="painel-saude">
+      <input class="busca" id="busca-saude" type="search" placeholder="Buscar unidade, endereço ou bairro…">
+      <p class="contagem" id="cont-saude"></p>
+      <div class="scroll-tabela">
+        <table><thead><tr>
+          <th>Unidade</th><th>Bairro</th><th>Endereço</th><th>Telefone</th><th>Turno</th><th>SUS</th><th>Serviços</th>
+        </tr></thead><tbody id="tb-saude"></tbody></table>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="titulo">COOP Clima São Vicente 🌿</div>
+  <p>Painel estático gerado automaticamente a partir de dados públicos (Censo demográfico,
+  Catálogo de Escolas e CNES/Saúde). Sem servidor: todos os dados estão embutidos nesta página.</p>
+  <p id="rodape-gerado"></p>
+  <p>Mapa © colaboradores do <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>.</p>
+</footer>
+
+<script>
+const DATA = __DATA_JSON__;
+
+/* ================= paleta ================= */
+const COR = {
+  verde:'#007a4a', marrom:'#874a33', azul:'#00a3e0', laranja:'#e87722',
+  offwhite:'#f9f3f0', escuro:'#1a3c2c', ink:'#2b2b28', ink2:'#5c5a54'
+};
+Chart.defaults.font.family = "'Roboto', sans-serif";
+Chart.defaults.color = COR.ink2;
+
+/* ================= utilidades ================= */
+const fmtInt = n => n == null ? '–' : n.toLocaleString('pt-BR');
+const fmtDec = (n,d=1) => n == null ? '–' : n.toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});
+const $ = id => document.getElementById(id);
+
+const censoPorKey = {};
+DATA.censo.forEach(c => censoPorKey[c.key] = c);
+const nomePorKey = {};
+DATA.censo.forEach(c => nomePorKey[c.key] = c.bairro);
+DATA.extra_bairros.forEach(b => nomePorKey[b.key] = b.bairro);
+const nomeBairro = key => nomePorKey[key] || key;
+
+const escolasAtivas = DATA.escolas.filter(e => e.status !== 'Paralisada');
+
+let bairroAtual = ''; // '' = visão geral
+
+const filtraEsc = () => bairroAtual ? escolasAtivas.filter(e => e.key === bairroAtual) : escolasAtivas;
+const filtraSau = () => bairroAtual ? DATA.saude.filter(s => s.key === bairroAtual) : DATA.saude;
+const filtraEscTodas = () => bairroAtual ? DATA.escolas.filter(e => e.key === bairroAtual) : DATA.escolas;
+
+/* ================= dropdown ================= */
+(function montaSelect(){
+  const sel = $('sel-bairro');
+  const g1 = document.createElement('optgroup'); g1.label = 'Bairros (com dados do censo)';
+  [...DATA.censo].sort((a,b)=>a.bairro.localeCompare(b.bairro,'pt-BR')).forEach(c=>{
+    const o = document.createElement('option'); o.value = c.key; o.textContent = c.bairro; g1.appendChild(o);
+  });
+  sel.appendChild(g1);
+  if (DATA.extra_bairros.length){
+    const g2 = document.createElement('optgroup'); g2.label = 'Outros bairros (sem dados do censo)';
+    DATA.extra_bairros.forEach(b=>{
+      const o = document.createElement('option'); o.value = b.key; o.textContent = b.bairro; g2.appendChild(o);
+    });
+    sel.appendChild(g2);
+  }
+  sel.addEventListener('change', () => { bairroAtual = sel.value; atualizaTudo(); });
+  $('btn-limpar').addEventListener('click', () => { sel.value=''; bairroAtual=''; atualizaTudo(); });
+})();
+
+/* ================= KPIs ================= */
+function atualizaKPIs(){
+  const esc = filtraEsc(), sau = filtraSau();
+  const cap = esc.reduce((s,e)=>s+(e.capacidade||0),0);
+  let pop=null, renda=null, dens=null;
+
+  if (bairroAtual){
+    const c = censoPorKey[bairroAtual];
+    if (c){ pop=c.pop_total; renda=c.renda_sal; dens=c.hab_ha; }
+    $('kpi-escopo').textContent = 'Indicadores do bairro ' + nomeBairro(bairroAtual) +
+      (c ? '.' : ' — bairro sem registro no censo: indicadores demográficos indisponíveis.');
+  } else {
+    pop = DATA.censo.reduce((s,c)=>s+c.pop_total,0);
+    const somaPond = DATA.censo.reduce((s,c)=>s+c.renda_sal*c.pop_total,0);
+    renda = somaPond/pop;
+    const areaHa = DATA.censo.reduce((s,c)=>s+c.area_km2,0)*100;
+    dens = pop/areaHa;
+    $('kpi-escopo').textContent = 'Indicadores de toda a cidade (' + DATA.censo.length + ' bairros do censo).';
+  }
+  $('kpi-pop').textContent  = fmtInt(pop);
+  $('kpi-renda').textContent= renda==null ? '–' : fmtDec(renda,1);
+  $('kpi-dens').textContent = dens==null ? '–' : fmtDec(dens,1);
+  $('kpi-esc').textContent  = fmtInt(esc.length);
+  $('kpi-cap').textContent  = cap ? '≈ '+fmtInt(cap) : '0';
+  $('kpi-sau').textContent  = fmtInt(sau.length);
+  $('kpi-sau-pop').textContent = (pop && sau.length) ? fmtDec(sau.length/pop*10000,1) : '–';
+
+  const ctx = $('contexto-bairro');
+  if (bairroAtual){
+    ctx.style.display='block';
+    $('ctx-nome').textContent = nomeBairro(bairroAtual);
+    const c = censoPorKey[bairroAtual];
+    $('ctx-detalhe').textContent = c
+      ? `${fmtInt(c.pop_total)} habitantes · ${fmtDec(c.area_km2,2)} km² · ${esc.length} escolas ativas · ${sau.length} unidades de saúde`
+      : `${esc.length} escolas ativas · ${sau.length} unidades de saúde (sem dados do censo)`;
+  } else ctx.style.display='none';
+}
+
+/* ================= gráficos ================= */
+const tooltipPct = {
+  callbacks:{ label(ctx){
+    const total = ctx.dataset.data.reduce((a,b)=>a+b,0) || 1;
+    return ` ${ctx.label}: ${fmtInt(ctx.parsed)} (${(ctx.parsed/total*100).toFixed(1)}%)`;
+  }}
+};
+const optRosca = {
+  responsive:true, maintainAspectRatio:false, cutout:'55%',
+  plugins:{ legend:{position:'bottom',labels:{boxWidth:14,borderRadius:4,useBorderRadius:true}}, tooltip:tooltipPct }
+};
+const optBarra = (horizontal=false) => ({
+  responsive:true, maintainAspectRatio:false,
+  indexAxis: horizontal?'y':'x',
+  plugins:{ legend:{display:false} },
+  scales:{
+    x:{grid:{color:'#eee4dd'},ticks:{precision:0}},
+    y:{grid:{color:'#eee4dd'},ticks:{precision:0}}
+  }
+});
+
+const charts = {};
+function fazRosca(id, labels, cores){
+  charts[id] = new Chart($(id), { type:'doughnut',
+    data:{ labels, datasets:[{ data:[], backgroundColor:cores, borderColor:COR.offwhite, borderWidth:2 }]},
+    options:optRosca });
+}
+function fazBarra(id, labels, cor, horizontal=false){
+  charts[id] = new Chart($(id), { type:'bar',
+    data:{ labels, datasets:[{ data:[], backgroundColor:cor, borderRadius:4, maxBarThickness:46 }]},
+    options:optBarra(horizontal) });
+}
+
+const ETAPAS = ['Educação Infantil','Ensino Fundamental','Ensino Médio','Educação de Jovens Adultos','Educação Profissional'];
+const PORTES = ['Até 50','51–200','201–500','501–1000','Mais de 1000','Sem matrícula'];
+const SERVICOS = [
+  ['ambulatorial','Atend. ambulatorial'], ['apoio','Serviço de apoio'], ['hospitalar','Atend. hospitalar'],
+  ['cirurgico','Centro cirúrgico'], ['obstetrico','Centro obstétrico'], ['neonatal','Centro neonatal']
+];
+
+fazRosca('ch-demografia', ['Branca','Negra (preta+parda)','Amarela','Indígena'], [COR.verde,COR.laranja,COR.azul,COR.marrom]);
+fazRosca('ch-categoria',  ['Pública Municipal','Pública Estadual','Privada'], [COR.verde,COR.azul,COR.laranja]);
+fazBarra('ch-etapas', ETAPAS.map(e=>e.replace('Educação de Jovens Adultos','EJA')), COR.verde);
+fazBarra('ch-porte', PORTES, COR.azul);
+fazBarra('ch-servicos', SERVICOS.map(s=>s[1]), COR.verde, true);
+fazRosca('ch-sus', ['Atende SUS','Não atende SUS'], [COR.verde,COR.marrom]);
+fazBarra('ch-densidade', [], COR.verde, true);
+
+function atualizaGraficos(){
+  const esc = filtraEsc(), sau = filtraSau();
+
+  // demografia
+  let demo=[0,0,0,0];
+  if (bairroAtual){
+    const c = censoPorKey[bairroAtual];
+    if (c) demo=[c.pop_branca,c.pop_negra,c.pop_amarela,c.pop_indigena];
+  } else {
+    DATA.censo.forEach(c=>{ demo[0]+=c.pop_branca; demo[1]+=c.pop_negra; demo[2]+=c.pop_amarela; demo[3]+=c.pop_indigena; });
+  }
+  charts['ch-demografia'].data.datasets[0].data = demo;
+
+  const catCont = {'Pública Municipal':0,'Pública Estadual':0,'Privada':0};
+  esc.forEach(e=>{ if (catCont[e.categoria]!=null) catCont[e.categoria]++; });
+  charts['ch-categoria'].data.datasets[0].data = Object.values(catCont);
+
+  charts['ch-etapas'].data.datasets[0].data = ETAPAS.map(et => esc.filter(e=>e.etapas.includes(et)).length);
+  charts['ch-porte'].data.datasets[0].data  = PORTES.map(p => esc.filter(e=>e.porte===p).length);
+  charts['ch-servicos'].data.datasets[0].data = SERVICOS.map(([k]) => sau.filter(s=>s.servicos[k]).length);
+  charts['ch-sus'].data.datasets[0].data = [sau.filter(s=>s.sus).length, sau.filter(s=>!s.sus).length];
+
+  // densidade top10 (sempre cidade toda; destaca bairro selecionado)
+  const top = [...DATA.censo].sort((a,b)=>b.hab_ha-a.hab_ha).slice(0,10);
+  const chD = charts['ch-densidade'];
+  chD.data.labels = top.map(c=>c.bairro);
+  chD.data.datasets[0].data = top.map(c=>c.hab_ha);
+  chD.data.datasets[0].backgroundColor = top.map(c=>c.key===bairroAtual?COR.laranja:COR.verde);
+
+  Object.values(charts).forEach(c=>c.update());
+}
+
+/* ================= mapa ================= */
+const mapa = L.map('mapa', {scrollWheelZoom:false});
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{
+  maxZoom:19, attribution:'&copy; OpenStreetMap'
+}).addTo(mapa);
+const VISTA_CIDADE = [[-24.05,-46.58],[-23.90,-46.30]];
+mapa.fitBounds(VISTA_CIDADE);
+
+const camadas = {
+  escPub:  L.layerGroup().addTo(mapa),
+  escPriv: L.layerGroup().addTo(mapa),
+  sauSus:  L.layerGroup().addTo(mapa),
+  sauNao:  L.layerGroup().addTo(mapa),
+};
+L.control.layers(null, {
+  '🏫 Escolas públicas': camadas.escPub,
+  '🏫 Escolas privadas': camadas.escPriv,
+  '🏥 Saúde — atende SUS': camadas.sauSus,
+  '🏥 Saúde — demais': camadas.sauNao,
+}, {collapsed:false}).addTo(mapa);
+
+function ponto(lat,lng,cor){
+  return L.circleMarker([lat,lng],{radius:7,color:'#ffffff',weight:2,fillColor:cor,fillOpacity:.92});
+}
+function popupEscola(e){
+  return `<b>${e.nome}</b><br>${e.categoria} · ${e.status}<br>` +
+    (e.porte?`Porte: ${e.porte} matrículas<br>`:'') +
+    (e.etapas.length?`Etapas: ${e.etapas.join(', ')}<br>`:'') +
+    `${e.endereco}<br>${e.telefone||'Telefone não informado'}`;
+}
+function popupSaude(s){
+  const serv = SERVICOS.filter(([k])=>s.servicos[k]).map(([,r])=>r).join(', ');
+  return `<b>${s.nome}</b><br>${s.sus?'Atende SUS':'Não atende SUS'} · ${s.turno}<br>` +
+    (serv?`Serviços: ${serv}<br>`:'') +
+    `${s.endereco} — ${nomeBairro(s.key)}<br>${s.telefone||'Telefone não informado'}`;
+}
+
+function atualizaMapa(){
+  Object.values(camadas).forEach(g=>g.clearLayers());
+  const pts = [];
+  filtraEscTodas().forEach(e=>{
+    if (e.lat==null) return;
+    const alvo = e.categoria==='Privada' ? camadas.escPriv : camadas.escPub;
+    const cor  = e.categoria==='Privada' ? COR.azul : COR.laranja;
+    ponto(e.lat,e.lng,cor).bindPopup(popupEscola(e)).addTo(alvo);
+    pts.push([e.lat,e.lng]);
+  });
+  filtraSau().forEach(s=>{
+    if (s.lat==null) return;
+    const alvo = s.sus ? camadas.sauSus : camadas.sauNao;
+    ponto(s.lat,s.lng, s.sus?COR.verde:COR.marrom).bindPopup(popupSaude(s)).addTo(alvo);
+    pts.push([s.lat,s.lng]);
+  });
+  if (bairroAtual && pts.length) mapa.fitBounds(L.latLngBounds(pts).pad(0.25));
+  else mapa.fitBounds(VISTA_CIDADE);
+}
+
+const semCoord = DATA.escolas.filter(e=>e.lat==null).length + DATA.saude.filter(s=>s.lat==null).length;
+if (semCoord) $('nota-coord').textContent = `· ${semCoord} unidades sem coordenada válida não aparecem no mapa.`;
+
+/* ================= rankings ================= */
+function contaPorBairro(lista){
+  const m = {};
+  lista.forEach(r=>{ if(r.key) m[r.key]=(m[r.key]||0)+1; });
+  return Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,10);
+}
+function preencheTop(idTbody, pares){
+  $(idTbody).innerHTML = pares.map(([key,n],i)=>
+    `<tr class="${key===bairroAtual?'destacado':''}"><td>${i+1}º</td><td>${nomeBairro(key)}</td><td class="num">${fmtInt(n)}</td></tr>`
+  ).join('');
+}
+function atualizaRankings(){
+  preencheTop('tb-top-escolas', contaPorBairro(escolasAtivas));
+  preencheTop('tb-top-saude',  contaPorBairro(DATA.saude));
+}
+
+/* ================= tabelas de detalhamento ================= */
+const badgeCat = c => c==='Privada' ? '<span class="badge laranja">Privada</span>'
+  : c==='Pública Estadual' ? '<span class="badge azul">Púb. Estadual</span>'
+  : '<span class="badge verde">Púb. Municipal</span>';
+const badgeStatus = s => s==='Em funcionamento' ? '<span class="badge verde">Ativa</span>'
+  : s==='Paralisada' ? '<span class="badge cinza">Paralisada</span>'
+  : `<span class="badge marrom">${s}</span>`;
+
+function linhasEscolas(termo){
+  termo = termo.trim().toLowerCase();
+  const rows = filtraEscTodas().filter(e =>
+    !termo || (e.nome+' '+e.endereco+' '+nomeBairro(e.key)).toLowerCase().includes(termo));
+  $('cont-escolas').textContent = `${rows.length} escola(s) listada(s).`;
+  $('tb-escolas').innerHTML = rows.map(e=>`<tr>
+    <td><b>${e.nome}</b></td><td>${badgeCat(e.categoria)}</td><td>${nomeBairro(e.key)}</td>
+    <td>${e.endereco}</td><td>${e.telefone||'–'}</td><td>${e.porte||'–'}</td>
+    <td>${e.etapas.join(', ')||'–'}</td><td>${badgeStatus(e.status)}</td></tr>`).join('');
+}
+function linhasSaude(termo){
+  termo = termo.trim().toLowerCase();
+  const rows = filtraSau().filter(s =>
+    !termo || (s.nome+' '+s.endereco+' '+nomeBairro(s.key)).toLowerCase().includes(termo));
+  $('cont-saude').textContent = `${rows.length} unidade(s) listada(s).`;
+  $('tb-saude').innerHTML = rows.map(s=>{
+    const serv = SERVICOS.filter(([k])=>s.servicos[k]).map(([,r])=>r).join(', ');
+    return `<tr><td><b>${s.nome}</b></td><td>${nomeBairro(s.key)}</td><td>${s.endereco}</td>
+    <td>${s.telefone||'–'}</td><td>${s.turno}</td>
+    <td>${s.sus?'<span class="badge verde">SUS</span>':'<span class="badge cinza">Não</span>'}</td>
+    <td>${serv||'–'}</td></tr>`;}).join('');
+}
+$('busca-escolas').addEventListener('input', e=>linhasEscolas(e.target.value));
+$('busca-saude').addEventListener('input', e=>linhasSaude(e.target.value));
+
+document.querySelectorAll('.aba').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.aba').forEach(b=>b.classList.remove('ativa'));
+    document.querySelectorAll('.painel-aba').forEach(p=>p.classList.remove('ativa'));
+    btn.classList.add('ativa');
+    $('painel-'+btn.dataset.aba).classList.add('ativa');
+  });
+});
+
+/* ================= orquestração ================= */
+function atualizaTudo(){
+  atualizaKPIs();
+  atualizaGraficos();
+  atualizaMapa();
+  atualizaRankings();
+  linhasEscolas($('busca-escolas').value);
+  linhasSaude($('busca-saude').value);
+}
+$('rodape-gerado').textContent = 'Dados processados em ' +
+  new Date(DATA.gerado_em+'T12:00:00').toLocaleDateString('pt-BR') + '.';
+atualizaTudo();
+</script>
+</body>
+</html>
