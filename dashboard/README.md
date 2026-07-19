@@ -13,9 +13,10 @@ dashboard/
 │   ├── dados_censo_limpos.csv           # demografia por bairro (Censo)
 │   ├── escolas_final.csv                # catálogo de escolas
 │   └── estabelecimento_saude_final.csv  # estabelecimentos de saúde (CNES)
-├── etl.py            # script de ETL: lê os CSVs, trata e injeta o JSON no template
-├── template.html     # template do dashboard (HTML/CSS/JS + marcador __DATA_JSON__)
-├── index.html        # ARQUIVO FINAL gerado pelo ETL (não editar à mão)
+├── etl.py                  # script de ETL: lê os CSVs, trata e injeta o JSON no template
+├── template.html           # template do dashboard (HTML/CSS/JS + marcadores __DATA_JSON__ / __LOGO_DATA__)
+├── logo_branco_verde.png   # logo do projeto, embutida no header pelo ETL
+├── index.html              # ARQUIVO FINAL gerado pelo ETL (não editar à mão)
 └── README.md
 ```
 
@@ -25,6 +26,8 @@ dashboard/
 
 - Python 3.9 ou superior
 - Pandas: `pip install pandas`
+- Pillow (opcional, recomendado): `pip install pillow` — recorta a margem
+  sobrando da logo antes de embuti-la. Sem Pillow, a logo é embutida inteira.
 
 ### 2. Gerar o dashboard
 
@@ -83,6 +86,11 @@ Para atualizar os dados no futuro: substitua os CSVs em `dados_tratados/`, rode
 
 ## Identidade visual
 
-- **Cores institucionais:** verde `#007a4a`, marrom `#874a33`, azul claro `#00a3e0`, laranja `#e87722`; fundo off-white `#f9f3f0` e verde escuro `#1a3c2c` em cabeçalho/rodapé.
+- **Logo:** a logo oficial (`logo_branco_verde.png`) é embutida no cabeçalho como
+  data URI, substituindo o título em texto. Seu fundo verde `#007a4a` é o mesmo do
+  cabeçalho, então ela se integra sem emenda visível.
+- **Cores institucionais:** verde `#007a4a` (também usado em cabeçalho, rodapé e
+  cabeçalhos de tabela), marrom `#874a33`, azul claro `#00a3e0`, laranja `#e87722`
+  (linha de destaque sob o cabeçalho); fundo off-white `#f9f3f0`.
 - **Tipografia:** [Londrina Solid](https://fonts.google.com/specimen/Londrina+Solid) para títulos e [Roboto](https://fonts.google.com/specimen/Roboto) para textos, tabelas e KPIs (Google Fonts).
 - Bibliotecas via CDN: Chart.js 4 e Leaflet 1.9 (necessário acesso à internet para carregar a página).

@@ -8,10 +8,12 @@ GitHub Pages — sem backend).
 
 Uso:  python etl.py
 """
+import base64
 import json
 import re
 import unicodedata
 from datetime import date
+from io import BytesIO
 from pathlib import Path
 
 import pandas as pd
@@ -20,6 +22,7 @@ BASE = Path(__file__).resolve().parent
 DADOS = BASE / "dados_tratados"
 TEMPLATE = BASE / "template.html"
 SAIDA = BASE / "index.html"
+LOGO = BASE / "logo_branco_verde.png"
 
 # Caixa delimitadora aproximada de São Vicente (SP) — pontos fora dela são
 # erros de geocodificação e ficam sem marcador no mapa.
@@ -235,6 +238,38 @@ def carrega_saude(keys_censo):
     return registros
 
 
+# ------------------------------------------------------------------------ logo
+
+def logo_data_uri():
+    """Lê a logo, recorta a margem verde sobrando e devolve como data URI PNG.
+
+    Embutir a imagem mantém o index.html autocontido (um único arquivo). O
+    recorte usa Pillow quando disponível; sem Pillow, embute a imagem íntegra.
+    """
+    if not LOGO.exists():
+        print("AVISO: logo_branco_verde.png não encontrada — cabeçalho ficará sem logo.")
+        return ""
+    raw = LOGO.read_bytes()
+    try:
+        from PIL import Image, ImageChops
+        im = Image.open(BytesIO(raw)).convert("RGBA")
+        fundo = Image.new("RGB", im.size, im.convert("RGB").getpixel((0, 0)))
+        bbox = ImageChops.difference(im.convert("RGB"), fundo).getbbox()
+        if bbox:
+            pad = 26
+            im = im.crop((
+                max(bbox[0] - pad, 0), max(bbox[1] - pad, 0),
+                min(bbox[2] + pad, im.width), min(bbox[3] + pad, im.height),
+            ))
+        buf = BytesIO()
+        im.save(buf, format="PNG", optimize=True)
+        raw = buf.getvalue()
+    except ImportError:
+        print("AVISO: Pillow não instalado — logo embutida sem recorte.")
+    b64 = base64.b64encode(raw).decode("ascii")
+    return f"data:image/png;base64,{b64}"
+
+
 # ----------------------------------------------------------------------- main
 
 def main():
@@ -262,7 +297,9 @@ def main():
     template = TEMPLATE.read_text(encoding="utf-8")
     if "__DATA_JSON__" not in template:
         raise SystemExit("template.html não contém o marcador __DATA_JSON__")
-    SAIDA.write_text(template.replace("__DATA_JSON__", payload), encoding="utf-8")
+    html = template.replace("__DATA_JSON__", payload)
+    html = html.replace("__LOGO_DATA__", logo_data_uri())
+    SAIDA.write_text(html, encoding="utf-8")
 
     sem_coord = sum(1 for r in escolas + saude if r["lat"] is None)
     print(f"OK: {SAIDA.name} gerado.")

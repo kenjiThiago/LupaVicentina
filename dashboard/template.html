@@ -17,7 +17,7 @@
   --azul:#00a3e0;
   --laranja:#e87722;
   --offwhite:#f9f3f0;
-  --verde-escuro:#1a3c2c;
+  --verde-escuro:#007a4a;
   --ink:#2b2b28;
   --ink-2:#5c5a54;
   --card:#ffffff;
@@ -40,12 +40,12 @@ header{
   background:var(--verde-escuro);
   color:var(--offwhite);
   padding:22px clamp(16px,4vw,48px) 26px;
-  border-bottom:6px solid var(--verde);
+  border-bottom:6px solid var(--laranja);
 }
 .header-linha{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-end;justify-content:space-between}
-header h1{font-size:clamp(1.9rem,4.5vw,3rem);color:#fff;line-height:1.05}
-header h1 .folha{color:var(--laranja)}
-header .sub{color:#cfe4d6;font-size:.95rem;max-width:640px;margin-top:6px}
+.marca{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+.marca .logo{height:clamp(96px,15vw,150px);width:auto;display:block;margin-left:-8px}
+header .sub{color:#eaf5ee;font-size:.95rem;max-width:640px}
 .filtro-bairro{display:flex;flex-direction:column;gap:6px;min-width:260px}
 .filtro-bairro label{font-family:'Londrina Solid',cursive;font-size:1.15rem;color:#cfe4d6}
 .filtro-bairro select{
@@ -163,8 +163,8 @@ footer a{color:var(--azul)}
 
 <header>
   <div class="header-linha">
-    <div>
-      <h1>COOP Clima <span class="folha">São Vicente</span> 🌿</h1>
+    <div class="marca">
+      <img class="logo" src="__LOGO_DATA__" alt="COOP Clima São Vicente">
       <p class="sub">Painel de utilidade pública: demografia, escolas e unidades de saúde
       de São Vicente (SP), bairro a bairro. Escolha um bairro para ver o retrato local.</p>
     </div>
@@ -317,7 +317,7 @@ const DATA = __DATA_JSON__;
 /* ================= paleta ================= */
 const COR = {
   verde:'#007a4a', marrom:'#874a33', azul:'#00a3e0', laranja:'#e87722',
-  offwhite:'#f9f3f0', escuro:'#1a3c2c', ink:'#2b2b28', ink2:'#5c5a54'
+  offwhite:'#f9f3f0', escuro:'#007a4a', ink:'#2b2b28', ink2:'#5c5a54'
 };
 Chart.defaults.font.family = "'Roboto', sans-serif";
 Chart.defaults.color = COR.ink2;
