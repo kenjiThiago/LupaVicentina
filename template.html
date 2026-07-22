@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>COOP Clima São Vicente — Painel de Bairros</title>
+<title>Lupa Vicentina — Painel de Bairros</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Londrina+Solid:wght@300;400;900&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
@@ -44,8 +44,14 @@ header{
 }
 .header-linha{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-end;justify-content:space-between}
 .marca{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+.marca-topo{display:flex;align-items:center;gap:16px}
 .marca .logo{height:clamp(96px,15vw,150px);width:auto;display:block;margin-left:-8px}
-header .sub{color:#eaf5ee;font-size:.95rem;max-width:640px}
+.marca .nome-projeto{
+  font-size:clamp(2rem,5vw,2.9rem);color:#fff;line-height:1.05;
+  text-shadow:0 2px 0 rgba(0,0,0,.12);
+}
+/* sem max-width: cada frase ocupa uma linha e só quebra se não couber na tela */
+header .sub{color:#eaf5ee;font-size:.95rem}
 .filtro-bairro{display:flex;flex-direction:column;gap:6px;min-width:260px}
 .filtro-bairro label{font-family:'Londrina Solid',cursive;font-size:1.15rem;color:#cfe4d6}
 .filtro-bairro select{
@@ -103,8 +109,22 @@ section{margin-bottom:34px}
 #mapa{height:500px;border-radius:var(--raio);box-shadow:var(--sombra);border:3px solid var(--verde-escuro)}
 .legenda-mapa{display:flex;flex-wrap:wrap;gap:14px;margin-top:10px;font-size:.85rem;color:var(--ink-2)}
 .legenda-mapa .dot{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:5px;vertical-align:-1px;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.25)}
+.legenda-mapa .dot.anel{background:#fff;border:3px solid var(--ink);box-shadow:none}
 .leaflet-popup-content{font-family:'Roboto',sans-serif;font-size:.85rem}
 .leaflet-popup-content b{color:var(--verde-escuro)}
+/* ponto que casa com a busca: anel escuro pulsante */
+@keyframes pulso-ponto{0%,100%{stroke-width:3}50%{stroke-width:7}}
+.ponto-destaque{animation:pulso-ponto 1.6s ease-in-out infinite}
+#aviso-busca{
+  display:flex;flex-wrap:wrap;align-items:center;gap:10px;
+  background:var(--laranja);color:#fff;border-radius:var(--raio);
+  padding:10px 16px;margin-bottom:12px;font-size:.95rem;
+}
+#aviso-busca[hidden]{display:none}
+#aviso-busca button{
+  background:#fff;color:var(--laranja);border:none;border-radius:8px;
+  padding:4px 12px;font-weight:700;cursor:pointer;font-family:'Roboto',sans-serif;order:2;margin-left:auto;
+}
 
 /* ---------- tabelas ---------- */
 .tabela-dupla{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
@@ -144,13 +164,20 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
 .busca:focus{outline:none;border-color:var(--azul)}
 .scroll-tabela{max-height:480px;overflow:auto;border-radius:8px}
 .contagem{font-size:.8rem;color:var(--ink-2);margin-bottom:8px}
+.tabela-vazia{
+  background:#faf7f4;border:1px dashed var(--borda);border-radius:10px;
+  padding:22px 16px;text-align:center;color:var(--ink-2);font-size:.95rem;
+}
+.tabela-vazia[hidden]{display:none}
 
 /* ---------- rodapé ---------- */
 footer{
   background:var(--verde-escuro);color:#cfe4d6;
   padding:26px clamp(16px,4vw,48px);font-size:.85rem;margin-top:20px;
 }
-footer .titulo{font-family:'Londrina Solid',cursive;font-size:1.4rem;color:#fff;margin-bottom:6px}
+footer .titulo{font-family:'Londrina Solid',cursive;font-size:1.4rem;color:#fff}
+footer .marca-rodape{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+footer .marca-rodape .logo{height:56px;width:auto;display:block}
 footer a{color:var(--azul)}
 
 @media (max-width:640px){
@@ -164,9 +191,12 @@ footer a{color:var(--azul)}
 <header>
   <div class="header-linha">
     <div class="marca">
-      <img class="logo" src="__LOGO_DATA__" alt="COOP Clima São Vicente">
-      <p class="sub">Painel de utilidade pública: demografia, escolas e unidades de saúde
-      de São Vicente (SP), bairro a bairro. Escolha um bairro para ver o retrato local.</p>
+      <div class="marca-topo">
+        <img class="logo" src="__LOGO_DATA__" alt="COOP Clima São Vicente">
+        <h1 class="nome-projeto">Lupa Vicentina</h1>
+      </div>
+      <p class="sub">Painel de utilidade pública: demografia, escolas e unidades de saúde de São Vicente (SP), bairro a bairro.</p>
+      <p class="sub">Escolha um bairro para ver o retrato local.</p>
     </div>
     <div class="filtro-bairro">
       <label for="sel-bairro">Filtrar por bairro</label>
@@ -236,17 +266,53 @@ footer a{color:var(--azul)}
     </div>
   </section>
 
+  <!-- Detalhamento -->
+  <section aria-label="Tabelas de detalhamento">
+    <h2 class="sec-titulo">Detalhamento por unidade</h2>
+    <p class="sec-sub">Listas completas, com busca por nome, endereço ou bairro. Respondem ao filtro de bairro
+    — e o que você buscar aqui aparece destacado no mapa abaixo.</p>
+    <div class="abas">
+      <button class="aba ativa" data-aba="escolas" type="button">🏫 Escolas</button>
+      <button class="aba" data-aba="saude" type="button">🏥 Unidades de saúde</button>
+    </div>
+    <div class="painel-aba ativa" id="painel-escolas">
+      <input class="busca" id="busca-escolas" type="search" placeholder="Buscar escola, endereço ou bairro…">
+      <p class="contagem" id="cont-escolas"></p>
+      <p class="tabela-vazia" id="vazio-escolas" hidden></p>
+      <div class="scroll-tabela" id="wrap-escolas">
+        <table><thead><tr>
+          <th>Escola</th><th>Categoria</th><th>Bairro</th><th>Endereço</th><th>Telefone</th><th>Porte</th><th>Etapas</th><th>Status</th>
+        </tr></thead><tbody id="tb-escolas"></tbody></table>
+      </div>
+    </div>
+    <div class="painel-aba" id="painel-saude">
+      <input class="busca" id="busca-saude" type="search" placeholder="Buscar unidade, endereço ou bairro…">
+      <p class="contagem" id="cont-saude"></p>
+      <p class="tabela-vazia" id="vazio-saude" hidden></p>
+      <div class="scroll-tabela" id="wrap-saude">
+        <table><thead><tr>
+          <th>Unidade</th><th>Bairro</th><th>Endereço</th><th>Telefone</th><th>Turno</th><th>SUS</th><th>Serviços</th>
+        </tr></thead><tbody id="tb-saude"></tbody></table>
+      </div>
+    </div>
+  </section>
+
   <!-- Mapa -->
   <section aria-label="Mapa">
     <h2 class="sec-titulo">Mapa de equipamentos públicos</h2>
     <p class="sec-sub">Use o controle no canto superior direito do mapa para ligar/desligar camadas.
     Clique nos pontos para ver detalhes.</p>
+    <div id="aviso-busca" hidden>
+      <button id="btn-limpar-busca" type="button">Limpar busca</button>
+      <span id="aviso-busca-texto"></span>
+    </div>
     <div id="mapa"></div>
     <div class="legenda-mapa">
       <span><span class="dot" style="background:#e87722"></span>Escolas públicas</span>
       <span><span class="dot" style="background:#00a3e0"></span>Escolas privadas</span>
       <span><span class="dot" style="background:#007a4a"></span>Saúde — atende SUS</span>
       <span><span class="dot" style="background:#874a33"></span>Saúde — demais unidades</span>
+      <span><span class="dot anel"></span>Resultado da busca</span>
       <span id="nota-coord"></span>
     </div>
   </section>
@@ -273,41 +339,15 @@ footer a{color:var(--azul)}
       <div class="chart-wrap" style="min-height:300px"><canvas id="ch-densidade"></canvas></div>
     </div>
   </section>
-
-  <!-- Detalhamento -->
-  <section aria-label="Tabelas de detalhamento">
-    <h2 class="sec-titulo">Detalhamento por unidade</h2>
-    <p class="sec-sub">Listas completas, com busca por nome, endereço ou bairro. Respondem ao filtro de bairro.</p>
-    <div class="abas">
-      <button class="aba ativa" data-aba="escolas" type="button">🏫 Escolas</button>
-      <button class="aba" data-aba="saude" type="button">🏥 Unidades de saúde</button>
-    </div>
-    <div class="painel-aba ativa" id="painel-escolas">
-      <input class="busca" id="busca-escolas" type="search" placeholder="Buscar escola, endereço ou bairro…">
-      <p class="contagem" id="cont-escolas"></p>
-      <div class="scroll-tabela">
-        <table><thead><tr>
-          <th>Escola</th><th>Categoria</th><th>Bairro</th><th>Endereço</th><th>Telefone</th><th>Porte</th><th>Etapas</th><th>Status</th>
-        </tr></thead><tbody id="tb-escolas"></tbody></table>
-      </div>
-    </div>
-    <div class="painel-aba" id="painel-saude">
-      <input class="busca" id="busca-saude" type="search" placeholder="Buscar unidade, endereço ou bairro…">
-      <p class="contagem" id="cont-saude"></p>
-      <div class="scroll-tabela">
-        <table><thead><tr>
-          <th>Unidade</th><th>Bairro</th><th>Endereço</th><th>Telefone</th><th>Turno</th><th>SUS</th><th>Serviços</th>
-        </tr></thead><tbody id="tb-saude"></tbody></table>
-      </div>
-    </div>
-  </section>
 </main>
 
 <footer>
-  <div class="titulo">COOP Clima São Vicente 🌿</div>
-  <p>Painel estático gerado automaticamente a partir de dados públicos (Censo demográfico,
-  Catálogo de Escolas e CNES/Saúde). Sem servidor: todos os dados estão embutidos nesta página.</p>
-  <p id="rodape-gerado"></p>
+  <div class="marca-rodape">
+    <img class="logo" src="__LOGO_DATA__" alt="Lupa Vicentina">
+    <span class="titulo">Lupa Vicentina</span>
+  </div>
+  <p>Painel estático gerado a partir de dados públicos (Censo demográfico 2022,
+  INEP - Catálogo de Escolas e CNES/Saúde).</p>
   <p>Mapa © colaboradores do <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>.</p>
 </footer>
 
@@ -337,10 +377,17 @@ const nomeBairro = key => nomePorKey[key] || key;
 const escolasAtivas = DATA.escolas.filter(e => e.status !== 'Paralisada');
 
 let bairroAtual = ''; // '' = visão geral
+let termoEsc = '', termoSau = ''; // termos das buscas (em minúsculas), compartilhados com o mapa
 
 const filtraEsc = () => bairroAtual ? escolasAtivas.filter(e => e.key === bairroAtual) : escolasAtivas;
 const filtraSau = () => bairroAtual ? DATA.saude.filter(s => s.key === bairroAtual) : DATA.saude;
 const filtraEscTodas = () => bairroAtual ? DATA.escolas.filter(e => e.key === bairroAtual) : DATA.escolas;
+
+// texto pesquisável de cada registro: nome, endereço e bairro
+const textoEsc = e => (e.nome+' '+e.endereco+' '+nomeBairro(e.key)).toLowerCase();
+const textoSau = s => (s.nome+' '+s.endereco+' '+nomeBairro(s.key)).toLowerCase();
+const casaEsc = e => !termoEsc || textoEsc(e).includes(termoEsc);
+const casaSau = s => !termoSau || textoSau(s).includes(termoSau);
 
 /* ================= dropdown ================= */
 (function montaSelect(){
@@ -500,8 +547,17 @@ L.control.layers(null, {
   '🏥 Saúde — demais': camadas.sauNao,
 }, {collapsed:false}).addTo(mapa);
 
-function ponto(lat,lng,cor){
-  return L.circleMarker([lat,lng],{radius:7,color:'#ffffff',weight:2,fillColor:cor,fillOpacity:.92});
+// destaque = casa com a busca; apagado = há busca ativa e este ponto não casa
+function ponto(lat,lng,cor,destaque,apagado){
+  return L.circleMarker([lat,lng],{
+    radius: destaque ? 11 : (apagado ? 4 : 7),
+    color: destaque ? COR.ink : '#ffffff',
+    weight: destaque ? 3 : 2,
+    opacity: apagado ? .35 : 1,
+    fillColor: cor,
+    fillOpacity: apagado ? .2 : .92,
+    className: destaque ? 'ponto-destaque' : ''
+  });
 }
 function popupEscola(e){
   return `<b>${e.nome}</b><br>${e.categoria} · ${e.status}<br>` +
@@ -518,22 +574,53 @@ function popupSaude(s){
 
 function atualizaMapa(){
   Object.values(camadas).forEach(g=>g.clearLayers());
-  const pts = [];
+  const buscando = !!(termoEsc || termoSau);
+  const pts = [], achados = [];
+  let unico = null;
+
   filtraEscTodas().forEach(e=>{
     if (e.lat==null) return;
+    const destaque = !!termoEsc && casaEsc(e);
     const alvo = e.categoria==='Privada' ? camadas.escPriv : camadas.escPub;
     const cor  = e.categoria==='Privada' ? COR.azul : COR.laranja;
-    ponto(e.lat,e.lng,cor).bindPopup(popupEscola(e)).addTo(alvo);
+    const m = ponto(e.lat,e.lng,cor,destaque,buscando && !destaque)
+      .bindPopup(popupEscola(e)).addTo(alvo);
     pts.push([e.lat,e.lng]);
+    if (destaque){ achados.push([e.lat,e.lng]); unico = m; }
   });
   filtraSau().forEach(s=>{
     if (s.lat==null) return;
+    const destaque = !!termoSau && casaSau(s);
     const alvo = s.sus ? camadas.sauSus : camadas.sauNao;
-    ponto(s.lat,s.lng, s.sus?COR.verde:COR.marrom).bindPopup(popupSaude(s)).addTo(alvo);
+    const m = ponto(s.lat,s.lng, s.sus?COR.verde:COR.marrom, destaque, buscando && !destaque)
+      .bindPopup(popupSaude(s)).addTo(alvo);
     pts.push([s.lat,s.lng]);
+    if (destaque){ achados.push([s.lat,s.lng]); unico = m; }
   });
-  if (bairroAtual && pts.length) mapa.fitBounds(L.latLngBounds(pts).pad(0.25));
+
+  // os destaques ficam por cima dos demais pontos
+  Object.values(camadas).forEach(g=>g.eachLayer(m=>{ if (m.options.className) m.bringToFront(); }));
+
+  if (achados.length===1) mapa.setView(achados[0], 16); // um ponto só: fitBounds iria ao zoom máximo
+  else if (achados.length) mapa.fitBounds(L.latLngBounds(achados).pad(0.3));
+  else if (bairroAtual && pts.length) mapa.fitBounds(L.latLngBounds(pts).pad(0.25));
   else mapa.fitBounds(VISTA_CIDADE);
+  if (achados.length===1 && unico) unico.openPopup();
+
+  avisaBusca(achados.length, buscando);
+}
+
+// tarja acima do mapa resumindo o que a busca destacou
+function avisaBusca(qtd, buscando){
+  const aviso = $('aviso-busca');
+  aviso.hidden = !buscando;
+  if (!buscando) return;
+  const partes = [];
+  if (termoEsc) partes.push(`escolas com “${$('busca-escolas').value.trim()}”`);
+  if (termoSau) partes.push(`unidades de saúde com “${$('busca-saude').value.trim()}”`);
+  $('aviso-busca-texto').textContent = qtd
+    ? `🔎 Mapa destacando ${qtd} resultado(s) da busca: ${partes.join(' e ')}.`
+    : `🔎 Nenhum resultado com coordenada no mapa para ${partes.join(' e ')}.`;
 }
 
 const semCoord = DATA.escolas.filter(e=>e.lat==null).length + DATA.saude.filter(s=>s.lat==null).length;
@@ -563,21 +650,36 @@ const badgeStatus = s => s==='Em funcionamento' ? '<span class="badge verde">Ati
   : s==='Paralisada' ? '<span class="badge cinza">Paralisada</span>'
   : `<span class="badge marrom">${s}</span>`;
 
+// mostra a tabela só quando há linhas; caso contrário, exibe uma mensagem explicativa
+function estadoVazio(idWrap, idVazio, qtd, termo, oQue){
+  const vazio = $(idVazio);
+  $(idWrap).hidden = qtd === 0;
+  vazio.hidden = qtd > 0;
+  if (qtd) return;
+  vazio.textContent = termo
+    ? `Nenhuma ${oQue} encontrada para “${termo}”${bairroAtual ? ' no bairro ' + nomeBairro(bairroAtual) : ''}.`
+    : bairroAtual
+      ? `Nenhuma ${oQue} catalogada no bairro ${nomeBairro(bairroAtual)}.`
+      : `Nenhuma ${oQue} catalogada.`;
+}
+
 function linhasEscolas(termo){
-  termo = termo.trim().toLowerCase();
-  const rows = filtraEscTodas().filter(e =>
-    !termo || (e.nome+' '+e.endereco+' '+nomeBairro(e.key)).toLowerCase().includes(termo));
+  termo = termo.trim();
+  termoEsc = termo.toLowerCase();
+  const rows = filtraEscTodas().filter(casaEsc);
   $('cont-escolas').textContent = `${rows.length} escola(s) listada(s).`;
+  estadoVazio('wrap-escolas','vazio-escolas', rows.length, termo, 'escola');
   $('tb-escolas').innerHTML = rows.map(e=>`<tr>
     <td><b>${e.nome}</b></td><td>${badgeCat(e.categoria)}</td><td>${nomeBairro(e.key)}</td>
     <td>${e.endereco}</td><td>${e.telefone||'–'}</td><td>${e.porte||'–'}</td>
     <td>${e.etapas.join(', ')||'–'}</td><td>${badgeStatus(e.status)}</td></tr>`).join('');
 }
 function linhasSaude(termo){
-  termo = termo.trim().toLowerCase();
-  const rows = filtraSau().filter(s =>
-    !termo || (s.nome+' '+s.endereco+' '+nomeBairro(s.key)).toLowerCase().includes(termo));
+  termo = termo.trim();
+  termoSau = termo.toLowerCase();
+  const rows = filtraSau().filter(casaSau);
   $('cont-saude').textContent = `${rows.length} unidade(s) listada(s).`;
+  estadoVazio('wrap-saude','vazio-saude', rows.length, termo, 'unidade de saúde');
   $('tb-saude').innerHTML = rows.map(s=>{
     const serv = SERVICOS.filter(([k])=>s.servicos[k]).map(([,r])=>r).join(', ');
     return `<tr><td><b>${s.nome}</b></td><td>${nomeBairro(s.key)}</td><td>${s.endereco}</td>
@@ -585,8 +687,19 @@ function linhasSaude(termo){
     <td>${s.sus?'<span class="badge verde">SUS</span>':'<span class="badge cinza">Não</span>'}</td>
     <td>${serv||'–'}</td></tr>`;}).join('');
 }
-$('busca-escolas').addEventListener('input', e=>linhasEscolas(e.target.value));
-$('busca-saude').addEventListener('input', e=>linhasSaude(e.target.value));
+// a busca também repercute no mapa; debounce evita redesenhar a cada tecla
+let timerBusca = null;
+function buscou(fn, valor){
+  fn(valor);
+  clearTimeout(timerBusca);
+  timerBusca = setTimeout(atualizaMapa, 250);
+}
+$('busca-escolas').addEventListener('input', e=>buscou(linhasEscolas, e.target.value));
+$('busca-saude').addEventListener('input', e=>buscou(linhasSaude, e.target.value));
+$('btn-limpar-busca').addEventListener('click', ()=>{
+  $('busca-escolas').value = ''; $('busca-saude').value = '';
+  linhasEscolas(''); linhasSaude(''); atualizaMapa();
+});
 
 document.querySelectorAll('.aba').forEach(btn=>{
   btn.addEventListener('click', ()=>{
@@ -601,13 +714,11 @@ document.querySelectorAll('.aba').forEach(btn=>{
 function atualizaTudo(){
   atualizaKPIs();
   atualizaGraficos();
-  atualizaMapa();
   atualizaRankings();
-  linhasEscolas($('busca-escolas').value);
+  linhasEscolas($('busca-escolas').value); // definem termoEsc/termoSau usados pelo mapa
   linhasSaude($('busca-saude').value);
+  atualizaMapa();
 }
-$('rodape-gerado').textContent = 'Dados processados em ' +
-  new Date(DATA.gerado_em+'T12:00:00').toLocaleDateString('pt-BR') + '.';
 atualizaTudo();
 </script>
 </body>
